@@ -2,18 +2,30 @@ import streamlit as st
 import pandas as pd
 from functions import *
 from itables.streamlit import interactive_table
+from itables import JavascriptFunction
 
+st.markdown("""
+<style>
+/* Hide "Press Enter to submit form" */
+[data-testid="InputInstructions"] {
+    display: none;
+}
+</style>
+""", unsafe_allow_html=True)
 
 init_db()
-
+st.session_state["selected_user"] = None
+st.session_state["new_username"] = None
+st.session_state["new_email"] = None
 
 st.title("Welcome to the Streamlit App")
            
 
 st.markdown("##  User list")
 users = get_users()
+print(users)
 
-columns_headers=["ID", "Username", "Email"]
+columns_headers=["ID", "Username", "Email", "Created"]
 
 df = pd.DataFrame(users, columns=columns_headers)
 
@@ -22,16 +34,19 @@ interactive_table(
     style = "width: 100%", # Sets the table width and height with scroll
     pageLength= 5,
     lengthMenu= [5, 10, 15, 20, -1],
-    order = [[1, "desc"]], # Orders the table desc by the 1st column.
+    order = [[3, "desc"]], # Orders the table desc by the 1st column.
     columnDefs = [
-        {"targets": [0], "visible": False}
+        {"targets": [0], "visible": False},
+        {"targets": [3], 
+            "render": JavascriptFunction("function(data, type) {""  return type === 'display' ? String(data).slice(0, 10) : data;""}")
+        }
     ]
 )
 
 
 #names = get_users()
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
 
     st.markdown("### Add user")
@@ -57,3 +72,25 @@ with col2:
         delete_user(selected_user[0])
         st.session_state["selected_user"] = None
         st.rerun()
+
+with col3:
+    st.markdown("### Update user")
+
+    # Drop down list using the lambda function, showing the name but returning the id
+    selected_user = st.selectbox("Select a user to update", options=users, format_func=lambda x: x[1], index=None, placeholder="Select a user")
+
+    if selected_user is not None:
+    
+        with st.form(key='update_user_form'):
+            new_username = st.text_input("User Name", value=selected_user[1])
+            new_email = st.text_input("Email", value=selected_user[2])
+            updateUser = st.form_submit_button("Update User", disabled=selected_user is None)
+
+            if updateUser:
+                if new_username.split() and new_email.split():
+                    update_user(selected_user[0], new_username, new_email)
+                    st.session_state["selected_user"] = None
+                    st.session_state["new_username"] = None
+                    st.session_state["new_email"] = None
+                    st.rerun()
+

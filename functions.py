@@ -7,7 +7,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
-            email TEXT NOT NULL
+            email TEXT NOT NULL,
+            created DATE DEFAULT (datetime('now','localtime'))
         )
     ''')
     conn.commit()
