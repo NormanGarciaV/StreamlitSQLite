@@ -34,4 +34,10 @@ def delete_user(user_id):
     cursor.execute('DELETE FROM users WHERE id = ?', (user_id,))
     conn.commit()
     conn.close()
-    
+
+def update_user(user_id, username, email):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('UPDATE users SET username = ?, email = ? WHERE id = ?', (username, email, user_id))
+    conn.commit()
+    conn.close()
